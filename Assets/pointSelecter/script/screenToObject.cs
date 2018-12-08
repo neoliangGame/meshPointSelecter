@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,11 +8,15 @@ public class screenToObject : MonoBehaviour {
 	void Update () {
         if (Input.GetMouseButton(0))
         {
-            Vector3 wordPoint = CountObjectPoint(Input.mousePosition);
+            //1.纯数学方法，不需要添加任何其他组件辅助
+            //Vector3 wordPoint = CountObjectPoint(Input.mousePosition);
+            //2.添加MeshCollider进行射线Ray撞击来拾取世界坐标点
+            Vector3 wordPoint = GetObjectPointUseRay(Input.mousePosition);
             GetComponent<Renderer>().material.SetVector("_Point", wordPoint);
         }
     }
 
+    #region 纯属数学计算获取，不需要添加碰撞网格
     Vector3 CountObjectPoint(Vector2 screenPoint)
     {
         Mesh mesh = gameObject.GetComponent<MeshFilter>().mesh;
@@ -82,7 +86,7 @@ public class screenToObject : MonoBehaviour {
         worldPoint = wor1 * weight1 + wor2 * weight2 + wor3 * weight3;
         return true;
     }
-
+    
     //vector cross
     float CountArea(Vector2 v1, Vector2 v2, Vector2 v3)
     {
@@ -91,4 +95,19 @@ public class screenToObject : MonoBehaviour {
         float area = a.x * b.y - a.y * b.x;
         return Mathf.Abs(area);
     }
+    #endregion
+
+    #region 借助物理系统中Ray的能力，获取在MeshCollider击中的具体世界坐标点
+    Vector3 GetObjectPointUseRay(Vector2 screenPoint)
+    {
+        RaycastHit hit = new RaycastHit();
+        Ray ray = Camera.main.ScreenPointToRay(screenPoint);
+        if (Physics.Raycast(ray, out hit, 1000f) == false)
+            return Vector3.zero;
+        if (hit.transform != transform)
+            return Vector3.zero;
+        return hit.point;
+    }
+    #endregion
+
 }
